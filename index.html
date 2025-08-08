@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Queen Maze Enhanced</title>
 <style>
-  /* Reset e base */
   * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -21,7 +20,7 @@
     color: #eee;
   }
   #game {
-    width: 95vw; max-width: 430px; /* iPhone 16 Pro Max approx */
+    width: 95vw; max-width: 430px;
     aspect-ratio: 1 / 1;
     background: #222233;
     border-radius: 25px;
@@ -229,40 +228,15 @@
 <div id="popup" role="alert" aria-live="assertive"></div>
 
 <script>
-/**
- * Gioco Labirinto Regina con preview mosse
- * 
- * Logica:
- * - Scacchiera 8x8 con regina bianca colorata in basso (d1).
- * - Tutti gli altri pezzi grigi e non interattivi.
- * - Tap regina: scacchiera si espande (animata) e mostra labirinto.
- * - Viene evidenziata la preview delle mosse possibili (quadrati raggiungibili da regina nel labirinto).
- * - L'utente può cliccare una casella evidenziata per muovere la regina.
- * - Alla fine, la porta da sbloccare si apre con la scansione di un QR code.
- * - Tutto ottimizzato per iPhone 16 Pro Max, touch e animazioni fluide.
- */
-
-// === Configurazione ===
-
-// Chiave NFC attesa = "Jocelyn"
 const NFC_KEY_CODE = "Jocelyn";
 
-// Codice segreto rivelato alla fine
-const SECRET_CODE = "42-A1B2-C3D4";
-
-// Dimensioni scacchiera
 const BOARD_SIZE = 8;
 
-// Simboli unicode
 const PIECES = {
   whiteQueen: "♕",
   door: "🚪"
 };
 
-// Layout labirinto:
-// 0 = passabile
-// 1 = muro
-// 2 = porta
 const MAZE = [
   [1,1,1,1,1,1,1,1],
   [1,0,0,0,1,0,0,1],
@@ -274,21 +248,14 @@ const MAZE = [
   [1,1,1,1,1,1,2,1]
 ];
 
-// Posizione porta nel labirinto
 const DOOR_POS = {r:7, c:6};
-
-// Posizione iniziale regina (riga, colonna)
-const INITIAL_QUEEN_POS = {r:7, c:3};
-
-// Variabili globali
-let boardEl, squares = [];
-let queenPos = {...INITIAL_QUEEN_POS};
+let queenPos = {r:7, c:3};
 let expanded = false;
 let moving = false;
 let doorUnlocked = false;
 
-let scannerOverlay, video, stream = null;
-let popupEl;
+let boardEl, squares = [];
+let scannerOverlay, video, popupEl;
 
 window.onload = () => {
   boardEl = document.getElementById("board");
@@ -299,13 +266,12 @@ window.onload = () => {
   generateBoard();
   updateBoardInitial();
 
-  squares[getIndex(INITIAL_QUEEN_POS.r, INITIAL_QUEEN_POS.c)].addEventListener("click", onQueenClick);
+  // Evento click regina iniziale
+  squares[getIndex(queenPos.r, queenPos.c)].addEventListener("click", onQueenClick);
+
   document.getElementById("closeScannerBtn").addEventListener("click", stopScanner);
 };
 
-/**
- * Crea la scacchiera 8x8
- */
 function generateBoard(){
   for(let r=0; r<BOARD_SIZE; r++){
     for(let c=0; c<BOARD_SIZE; c++){
@@ -322,115 +288,65 @@ function generateBoard(){
   }
 }
 
-/**
- * Ritorna indice nell'array squares da riga e colonna
- */
 function getIndex(r,c){
   return r*BOARD_SIZE + c;
 }
 
-/**
- * Imposta la scacchiera iniziale con tutti pezzi grigi e regina colorata.
- */
 function updateBoardInitial(){
   for(let r=0; r<BOARD_SIZE; r++){
     for(let c=0; c<BOARD_SIZE; c++){
       let sq = squares[getIndex(r,c)];
       sq.innerHTML = "";
-      sq.classList.remove("wall", "highlight", "selected");
+      sq.classList.remove("wall", "highlight", "selected", "door");
       sq.style.cursor = "default";
-      // pezzi grigi su tutte caselle (per effetto), eccetto regina iniziale
+      sq.onclick = null;
+      // regina iniziale
       if(r === queenPos.r && c === queenPos.c){
-        // Regina bianca colorata
         sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
-        sq.querySelector(".queen").classList.remove("grayed");
         sq.style.cursor = "pointer";
+        sq.onclick = onQueenClick;
       } else {
-        // Grayed out piece placeholder (usiamo un semplice pallino)
         sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
-        sq.style.cursor = "default";
       }
     }
   }
 }
 
-/**
- * Funzione chiamata al tap sulla regina.
- * Espande la scacchiera e mostra il labirinto.
- * Mostra anteprima mosse possibili.
- */
 function onQueenClick(){
   if(moving || doorUnlocked) return;
   if(!expanded){
-    // Espandi la scacchiera (scala + reveal labirinto)
     expanded = true;
     boardEl.style.transform = "scale(1.35)";
     setTimeout(() => {
       showMaze();
       showMovesPreview();
-    }, 900);
+    }, 700);
   } else {
-    // Se già espansa, mostra mosse preview aggiornata (per refresh)
     showMovesPreview();
   }
 }
 
-/**
- * Mostra il labirinto nella scacchiera, con muri, passaggi e porta.
- */
 function showMaze(){
   for(let r=0; r<BOARD_SIZE; r++){
     for(let c=0; c<BOARD_SIZE; c++){
       const sq = squares[getIndex(r,c)];
-      sq.classList.remove("wall", "highlight", "selected");
+      sq.classList.remove("wall", "highlight", "selected", "door");
       sq.innerHTML = "";
       sq.style.cursor = "default";
-      // Definisci i muri
+      sq.onclick = null;
+
       if(MAZE[r][c] === 1){
         sq.classList.add("wall");
       } else if(MAZE[r][c] === 2){
-        // Porta
         sq.classList.add("door");
         sq.innerHTML = PIECES.door;
         sq.style.cursor = "pointer";
-        sq.onclick = () => onDoorClick();
+        sq.onclick = onDoorClick;
       } else {
-        // Caselle libere con pezzi grigi (tranne regina)
         if(r === queenPos.r && c === queenPos.c){
           sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
           sq.style.cursor = "pointer";
           sq.onclick = onQueenClick;
         } else {
           sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
-          sq.onclick = () => onMoveAttempt(r, c);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Calcola le mosse possibili della regina nel labirinto.
- * La regina può muoversi in linea retta (orizzontale, verticale, diagonale)
- * ma solo su caselle passabili e senza attraversare muri.
- * Ritorna array di coordinate {r,c}.
- */
-function calculateQueenMoves(){
-  const moves = [];
-  const directions = [
-    {dr: -1, dc: 0},  // su
-    {dr: 1, dc: 0},   // giù
-    {dr: 0, dc: -1},  // sinistra
-    {dr: 0, dc: 1},   // destra
-    {dr: -1, dc: -1}, // diagonale su-sx
-    {dr: -1, dc: 1},  // diagonale su-dx
-    {dr: 1, dc: -1},  // diagonale giù-sx
-    {dr: 1, dc: 1}    // diagonale giù-dx
-  ];
-
-  for(const dir of directions){
-    let rr = queenPos.r + dir.dr;
-    let cc = queenPos.c + dir.dc;
-    while(rr >= 0 && rr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE){
-      if(MAZE[rr][cc] === 1) break; // muro blocca il percorso
-     
+          sq.onclick = () => onMoveAttempt(r, c
