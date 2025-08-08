@@ -1,102 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Queen Maze NFC Game</title>
+<title>Queen Maze Enhanced</title>
 <style>
-  /* Reset & base */
+  /* Reset e base */
   * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
   }
   body, html {
-    margin: 0; padding: 0; height: 100%; background: #111;
+    margin: 0; padding: 0; height: 100%;
+    background: linear-gradient(135deg, #121212 0%, #1e1e2f 100%);
     display: flex; justify-content: center; align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
     -webkit-user-select: none;
+    overflow: hidden;
+    color: #eee;
   }
   #game {
-    width: 95vw; max-width: 430px; /* iPhone 16 Pro Max ~430pt wide */
+    width: 95vw; max-width: 430px; /* iPhone 16 Pro Max approx */
     aspect-ratio: 1 / 1;
-    background: #222;
-    border-radius: 15px;
-    box-shadow: 0 0 20px #333;
+    background: #222233;
+    border-radius: 25px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
   }
-  /* Chessboard container */
   #board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
-    width: 100%;
-    height: 100%;
-    transition: transform 1s ease;
+    flex-grow: 1;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 12px #0ff,
+      0 0 30px #0ff88;
+    background: linear-gradient(45deg, #1f2a3a 0%, #111824 100%);
+    position: relative;
+    transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform-origin: center bottom;
   }
-  /* Squares */
   .square {
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.4rem;
+    font-size: 2.6rem;
     cursor: default;
     user-select: none;
-    transition: background-color 0.3s ease, filter 0.3s ease;
+    position: relative;
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.4s ease,
+      filter 0.4s ease;
+    border-radius: 5px;
   }
-  /* Standard chessboard colors */
   .square.light {
-    background-color: #f0d9b5;
+    background: linear-gradient(135deg, #d0cfcf, #b0aebf);
+    box-shadow:
+      inset 0 3px 5px rgba(255 255 255 / 0.3),
+      0 0 5px rgba(255 255 255 / 0.1);
   }
   .square.dark {
-    background-color: #b58863;
+    background: linear-gradient(135deg, #5a5768, #2a2934);
+    box-shadow:
+      inset 0 3px 5px rgba(0 0 0 / 0.7),
+      0 0 6px rgba(0 255 255 / 0.2);
+  }
+  .piece {
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 0 4px #0ff);
+    transition: filter 0.3s ease;
   }
   /* Grayed out pieces */
   .piece.grayed {
-    filter: grayscale(100%) brightness(0.5);
-    pointer-events: none;
+    filter: grayscale(100%) brightness(0.5) drop-shadow(0 0 1px #444);
   }
-  /* Queen piece */
+  /* Queen */
   .queen {
-    color: #fff;
-    font-weight: bold;
+    color: #00ffff;
+    font-weight: 900;
     cursor: pointer;
-    filter: drop-shadow(0 0 2px #0ff);
+    user-select: none;
+    filter:
+      drop-shadow(0 0 6px #0ff)
+      drop-shadow(0 0 12px #0ff);
+    transition:
+      transform 0.3s ease,
+      filter 0.5s ease;
   }
-  /* Door square */
+  .queen:hover {
+    filter:
+      drop-shadow(0 0 15px #0ff)
+      drop-shadow(0 0 25px #0ff);
+    transform: scale(1.1);
+  }
+  /* Door */
   .door {
-    position: relative;
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #f4a261;
+    filter:
+      drop-shadow(0 0 6px #f4a261)
+      drop-shadow(0 0 12px #f4a261);
     cursor: pointer;
-    filter: drop-shadow(0 0 3px #f4a261);
+    user-select: none;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    border-radius: 6px;
   }
-  /* Maze walls */
+  .door:hover {
+    transform: scale(1.1);
+    filter:
+      drop-shadow(0 0 15px #f4a261)
+      drop-shadow(0 0 25px #f4a261);
+  }
+  /* Walls */
   .wall {
-    background-color: #444;
+    background-color: #111117;
+    box-shadow: inset 0 0 6px #000a;
   }
-  /* Highlight possible moves */
+  /* Highlight preview moves */
   .highlight {
-    box-shadow: inset 0 0 0 4px #0ff;
+    box-shadow:
+      0 0 14px 4px #0ff7,
+      inset 0 0 12px 3px #0ff7;
+    cursor: pointer;
+    transition: box-shadow 0.4s ease;
   }
   /* Highlight selected square */
   .selected {
-    box-shadow: inset 0 0 8px 4px #06f;
+    box-shadow:
+      0 0 20px 6px #0ff,
+      inset 0 0 20px 6px #0ff;
   }
-  /* Animation for queen movement */
+  /* Queen moving */
   .queen.moving {
-    transition: transform 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  /* Overlay for QR scanner popup */
+  /* Scanner overlay */
   #scannerOverlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.9);
     display: none;
     justify-content: center;
     align-items: center;
@@ -109,104 +162,107 @@
   #scannerOverlay video {
     width: 90vw;
     max-width: 400px;
-    border-radius: 12px;
-    box-shadow: 0 0 20px #0ff;
+    border-radius: 15px;
+    box-shadow: 0 0 25px #0ff;
   }
   #scannerOverlay button {
     margin-top: 20px;
     background: #0ff;
     border: none;
-    border-radius: 10px;
+    border-radius: 15px;
     color: #000;
-    font-weight: 600;
-    font-size: 1.2rem;
-    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    padding: 12px 30px;
     cursor: pointer;
+    box-shadow: 0 0 15px #0ff;
+    transition: background-color 0.3s ease;
   }
-  /* Popup for messages */
+  #scannerOverlay button:hover {
+    background-color: #06c;
+    color: #fff;
+  }
+  /* Popup message */
   #popup {
     position: fixed;
     top: 10%;
     left: 50%;
     transform: translateX(-50%);
-    background: #222;
-    border-radius: 15px;
+    background: #222233cc;
+    border-radius: 25px;
     padding: 20px 30px;
     color: #0ff;
     font-size: 1.4rem;
-    box-shadow: 0 0 20px #0ff;
+    box-shadow: 0 0 25px #0ff;
     z-index: 10000;
     display: none;
     max-width: 90vw;
     text-align: center;
+    user-select: none;
   }
   #popup.error {
     color: #f44;
-    box-shadow: 0 0 20px #f44;
+    box-shadow: 0 0 25px #f44;
   }
   #popup.success {
     color: #4f4;
-    box-shadow: 0 0 20px #4f4;
+    box-shadow: 0 0 25px #4f4;
   }
 </style>
 </head>
 <body>
 
-<div id="game" aria-label="Queen maze chessboard game">
-  <div id="board" aria-live="polite" aria-atomic="true" role="grid" aria-label="Chessboard">
-    <!-- Squares generated by JS -->
+<div id="game" aria-label="Gioco regina nel labirinto">
+  <div id="board" role="grid" aria-live="polite" aria-atomic="true" aria-label="Scacchiera">
+    <!-- caselle generate da JS -->
   </div>
 </div>
 
 <!-- Scanner Overlay -->
 <div id="scannerOverlay" role="dialog" aria-modal="true" aria-labelledby="scannerTitle">
-  <div id="scannerTitle" style="margin-bottom: 10px;">Scan QR Code (Virtual NFC Key)</div>
+  <div id="scannerTitle" style="margin-bottom: 10px; font-weight: 700; font-size:1.3rem;">Scansiona il QR Code (Chiave NFC virtuale)</div>
   <video id="video" autoplay playsinline></video>
-  <canvas id="canvas" style="display: none;"></canvas>
-  <button id="closeScannerBtn" aria-label="Close scanner">Cancel</button>
+  <button id="closeScannerBtn" aria-label="Chiudi scanner">Annulla</button>
 </div>
 
-<!-- Popup messages -->
+<!-- Popup messaggi -->
 <div id="popup" role="alert" aria-live="assertive"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 /**
- * Queen Maze NFC Game
+ * Gioco Labirinto Regina con preview mosse
  * 
- * Features:
- * - Initial screen: 8x8 chessboard with all pieces grayed out except the white queen at bottom.
- * - Tap queen to expand board and reveal maze layout.
- * - Tap adjacent squares to move queen through maze.
- * - Final door tile unlocks when user scans correct QR code (virtual NFC key).
- * - Shows secret code on success.
- * 
- * Optimized for iPhone 16 Pro Max screen and touch input.
- * 
- * Author: ChatGPT
+ * Logica:
+ * - Scacchiera 8x8 con regina bianca colorata in basso (d1).
+ * - Tutti gli altri pezzi grigi e non interattivi.
+ * - Tap regina: scacchiera si espande (animata) e mostra labirinto.
+ * - Viene evidenziata la preview delle mosse possibili (quadrati raggiungibili da regina nel labirinto).
+ * - L'utente può cliccare una casella evidenziata per muovere la regina.
+ * - Alla fine, la porta da sbloccare si apre con la scansione di un QR code.
+ * - Tutto ottimizzato per iPhone 16 Pro Max, touch e animazioni fluide.
  */
 
-// === Configuration ===
+// === Configurazione ===
 
-// Changed NFC key code to "Jocelyn"
+// Chiave NFC attesa = "Jocelyn"
 const NFC_KEY_CODE = "Jocelyn";
 
-// Secret code revealed when door unlocks
+// Codice segreto rivelato alla fine
 const SECRET_CODE = "42-A1B2-C3D4";
 
-// Board size (8x8 standard chessboard)
+// Dimensioni scacchiera
 const BOARD_SIZE = 8;
 
-// Unicode chess pieces for simplicity
+// Simboli unicode
 const PIECES = {
   whiteQueen: "♕",
   door: "🚪"
 };
 
-// Maze layout:
-// 0 = empty/passable
-// 1 = wall
-// 2 = door
+// Layout labirinto:
+// 0 = passabile
+// 1 = muro
+// 2 = porta
 const MAZE = [
   [1,1,1,1,1,1,1,1],
   [1,0,0,0,1,0,0,1],
@@ -215,356 +271,166 @@ const MAZE = [
   [1,0,1,1,1,1,0,1],
   [1,0,0,0,0,1,0,1],
   [1,1,1,1,0,0,0,1],
-  [1,1,1,1,1,1,2,1] // Door position
+  [1,1,1,1,1,1,2,1]
 ];
 
-// Coordinates for door (row, col) in maze
-const DOOR_POS = {r: 7, c: 6};
+// Posizione porta nel labirinto
+const DOOR_POS = {r:7, c:6};
 
-// Initial queen position (bottom row, d1 square)
+// Posizione iniziale regina (riga, colonna)
 const INITIAL_QUEEN_POS = {r:7, c:3};
 
-// === Global variables ===
-let boardEl = null;
-let squares = [];
+// Variabili globali
+let boardEl, squares = [];
 let queenPos = {...INITIAL_QUEEN_POS};
 let expanded = false;
 let moving = false;
 let doorUnlocked = false;
 
-let scannerOverlay = null;
-let video = null;
-let canvas = null;
-let stream = null;
-let popupEl = null;
-let scanInterval = null;
+let scannerOverlay, video, stream = null;
+let popupEl;
 
-// === Initialization ===
 window.onload = () => {
   boardEl = document.getElementById("board");
   scannerOverlay = document.getElementById("scannerOverlay");
   video = document.getElementById("video");
-  canvas = document.getElementById("canvas");
   popupEl = document.getElementById("popup");
 
   generateBoard();
   updateBoardInitial();
 
-  squares[getIndex(INITIAL_QUEEN_POS.r, INITIAL_QUEEN_POS.c)].addEventListener("click", onQueenTap);
+  squares[getIndex(INITIAL_QUEEN_POS.r, INITIAL_QUEEN_POS.c)].addEventListener("click", onQueenClick);
   document.getElementById("closeScannerBtn").addEventListener("click", stopScanner);
-}
+};
 
+/**
+ * Crea la scacchiera 8x8
+ */
 function generateBoard(){
   for(let r=0; r<BOARD_SIZE; r++){
     for(let c=0; c<BOARD_SIZE; c++){
-      let sq = document.createElement("div");
+      const sq = document.createElement("div");
       sq.classList.add("square");
-      if((r+c)%2===0) {
-        sq.classList.add("light");
-      } else {
-        sq.classList.add("dark");
-      }
-      
-      sq.setAttribute("data-row", r);
-      sq.setAttribute("data-col", c);
-      sq.setAttribute("role", "gridcell");
-      sq.setAttribute("aria-label", `Square ${String.fromCharCode(97+c)}${8-r}`);
-      
+      sq.setAttribute("role","gridcell");
+      sq.setAttribute("data-r", r);
+      sq.setAttribute("data-c", c);
+      if((r+c)%2 === 0) sq.classList.add("light");
+      else sq.classList.add("dark");
       boardEl.appendChild(sq);
       squares.push(sq);
     }
   }
 }
 
-function getIndex(r, c){
-  return r * BOARD_SIZE + c;
+/**
+ * Ritorna indice nell'array squares da riga e colonna
+ */
+function getIndex(r,c){
+  return r*BOARD_SIZE + c;
 }
 
+/**
+ * Imposta la scacchiera iniziale con tutti pezzi grigi e regina colorata.
+ */
 function updateBoardInitial(){
-  // Standard chess pieces
-  const initialPieces = [
-    // Black pieces (top)
-    "♜","♞","♝","♛","♚","♝","♞","♜",
-    "♟","♟","♟","♟","♟","♟","♟","♟",
-    "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "",
-    // White pieces (bottom)
-    "♙","♙","♙","♙","♙","♙","♙","♙",
-    "♖","♘","♗","♕","♔","♗","♘","♖"
-  ];
-
-  squares.forEach((sq, idx) => {
-    sq.innerHTML = "";
-    let piece = initialPieces[idx];
-    if(piece) {
-      let pieceEl = document.createElement("span");
-      pieceEl.className = "piece grayed";
-      pieceEl.textContent = piece;
-      sq.appendChild(pieceEl);
+  for(let r=0; r<BOARD_SIZE; r++){
+    for(let c=0; c<BOARD_SIZE; c++){
+      let sq = squares[getIndex(r,c)];
+      sq.innerHTML = "";
+      sq.classList.remove("wall", "highlight", "selected");
+      sq.style.cursor = "default";
+      // pezzi grigi su tutte caselle (per effetto), eccetto regina iniziale
+      if(r === queenPos.r && c === queenPos.c){
+        // Regina bianca colorata
+        sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
+        sq.querySelector(".queen").classList.remove("grayed");
+        sq.style.cursor = "pointer";
+      } else {
+        // Grayed out piece placeholder (usiamo un semplice pallino)
+        sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
+        sq.style.cursor = "default";
+      }
     }
-  });
-
-  // Make white queen active
-  let queenSq = squares[getIndex(INITIAL_QUEEN_POS.r, INITIAL_QUEEN_POS.c)];
-  let queenPiece = queenSq.querySelector(".piece");
-  if(queenPiece) {
-    queenPiece.classList.remove("grayed");
-    queenPiece.classList.add("queen");
   }
 }
 
-function onQueenTap(){
-  if(expanded || moving) return;
-  
-  showPopup("Revealing maze...", "");
-  
-  setTimeout(() => {
-    expandToMaze();
-    hidePopup();
-  }, 1000);
-}
-
-function expandToMaze(){
-  expanded = true;
-  
-  // Clear all squares and apply maze layout
-  squares.forEach((sq, idx) => {
-    sq.innerHTML = "";
-    sq.className = "square";
-    
-    let r = Math.floor(idx / BOARD_SIZE);
-    let c = idx % BOARD_SIZE;
-    
-    // Add light/dark coloring
-    if((r+c)%2===0) {
-      sq.classList.add("light");
-    } else {
-      sq.classList.add("dark");
-    }
-    
-    let mazeValue = MAZE[r][c];
-    if(mazeValue === 1) {
-      sq.classList.add("wall");
-    } else if(mazeValue === 2) {
-      // Door
-      let doorEl = document.createElement("span");
-      doorEl.className = "door";
-      doorEl.textContent = PIECES.door;
-      sq.appendChild(doorEl);
-      sq.addEventListener("click", onDoorTap);
-    }
-    
-    // Add click handler for movement
-    if(mazeValue === 0 || mazeValue === 2) {
-      sq.addEventListener("click", (e) => onSquareTap(r, c));
-    }
-  });
-  
-  // Place queen at initial position
-  placeQueen(queenPos.r, queenPos.c);
-  
-  // Visual expansion effect
-  boardEl.style.transform = "scale(1.05)";
-  setTimeout(() => {
-    boardEl.style.transform = "scale(1)";
-  }, 500);
-}
-
-function placeQueen(r, c){
-  // Remove queen from all squares
-  squares.forEach(sq => {
-    let queen = sq.querySelector(".queen");
-    if(queen) queen.remove();
-  });
-  
-  // Place queen at new position
-  let targetSq = squares[getIndex(r, c)];
-  let queenEl = document.createElement("span");
-  queenEl.className = "piece queen";
-  queenEl.textContent = PIECES.whiteQueen;
-  targetSq.appendChild(queenEl);
-  
-  queenPos = {r, c};
-}
-
-function onSquareTap(r, c){
-  if(moving || !expanded) return;
-  
-  // Check if it's an adjacent square
-  let dr = Math.abs(r - queenPos.r);
-  let dc = Math.abs(c - queenPos.c);
-  
-  if(dr <= 1 && dc <= 1 && (dr !== 0 || dc !== 0)) {
-    // Valid adjacent move
-    if(MAZE[r][c] === 0 || MAZE[r][c] === 2) {
-      moveQueen(r, c);
-    }
+/**
+ * Funzione chiamata al tap sulla regina.
+ * Espande la scacchiera e mostra il labirinto.
+ * Mostra anteprima mosse possibili.
+ */
+function onQueenClick(){
+  if(moving || doorUnlocked) return;
+  if(!expanded){
+    // Espandi la scacchiera (scala + reveal labirinto)
+    expanded = true;
+    boardEl.style.transform = "scale(1.35)";
+    setTimeout(() => {
+      showMaze();
+      showMovesPreview();
+    }, 900);
   } else {
-    // Highlight valid moves briefly
-    highlightValidMoves();
+    // Se già espansa, mostra mosse preview aggiornata (per refresh)
+    showMovesPreview();
   }
 }
 
-function moveQueen(r, c){
-  moving = true;
-  placeQueen(r, c);
-  
-  setTimeout(() => {
-    moving = false;
-  }, 300);
-}
-
-function highlightValidMoves(){
-  // Clear existing highlights
-  squares.forEach(sq => sq.classList.remove("highlight"));
-  
-  // Highlight adjacent valid squares
-  for(let dr = -1; dr <= 1; dr++){
-    for(let dc = -1; dc <= 1; dc++){
-      if(dr === 0 && dc === 0) continue;
-      
-      let nr = queenPos.r + dr;
-      let nc = queenPos.c + dc;
-      
-      if(nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE){
-        if(MAZE[nr][nc] === 0 || MAZE[nr][nc] === 2){
-          squares[getIndex(nr, nc)].classList.add("highlight");
+/**
+ * Mostra il labirinto nella scacchiera, con muri, passaggi e porta.
+ */
+function showMaze(){
+  for(let r=0; r<BOARD_SIZE; r++){
+    for(let c=0; c<BOARD_SIZE; c++){
+      const sq = squares[getIndex(r,c)];
+      sq.classList.remove("wall", "highlight", "selected");
+      sq.innerHTML = "";
+      sq.style.cursor = "default";
+      // Definisci i muri
+      if(MAZE[r][c] === 1){
+        sq.classList.add("wall");
+      } else if(MAZE[r][c] === 2){
+        // Porta
+        sq.classList.add("door");
+        sq.innerHTML = PIECES.door;
+        sq.style.cursor = "pointer";
+        sq.onclick = () => onDoorClick();
+      } else {
+        // Caselle libere con pezzi grigi (tranne regina)
+        if(r === queenPos.r && c === queenPos.c){
+          sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
+          sq.style.cursor = "pointer";
+          sq.onclick = onQueenClick;
+        } else {
+          sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
+          sq.onclick = () => onMoveAttempt(r, c);
         }
       }
     }
   }
-  
-  // Remove highlights after 2 seconds
-  setTimeout(() => {
-    squares.forEach(sq => sq.classList.remove("highlight"));
-  }, 2000);
 }
 
-function onDoorTap(){
-  if(!expanded || moving || doorUnlocked) return;
-  
-  // Check if queen is adjacent to door
-  let dr = Math.abs(DOOR_POS.r - queenPos.r);
-  let dc = Math.abs(DOOR_POS.c - queenPos.c);
-  
-  if(dr <= 1 && dc <= 1) {
-    // Queen is adjacent, open scanner
-    startScanner();
-  } else {
-    showPopup("Move closer to the door!", "error");
-    setTimeout(hidePopup, 2000);
-    highlightValidMoves();
-  }
-}
+/**
+ * Calcola le mosse possibili della regina nel labirinto.
+ * La regina può muoversi in linea retta (orizzontale, verticale, diagonale)
+ * ma solo su caselle passabili e senza attraversare muri.
+ * Ritorna array di coordinate {r,c}.
+ */
+function calculateQueenMoves(){
+  const moves = [];
+  const directions = [
+    {dr: -1, dc: 0},  // su
+    {dr: 1, dc: 0},   // giù
+    {dr: 0, dc: -1},  // sinistra
+    {dr: 0, dc: 1},   // destra
+    {dr: -1, dc: -1}, // diagonale su-sx
+    {dr: -1, dc: 1},  // diagonale su-dx
+    {dr: 1, dc: -1},  // diagonale giù-sx
+    {dr: 1, dc: 1}    // diagonale giù-dx
+  ];
 
-function startScanner(){
-  scannerOverlay.style.display = "flex";
-  
-  navigator.mediaDevices.getUserMedia({ 
-    video: { 
-      facingMode: "environment",
-      width: { ideal: 320 },
-      height: { ideal: 320 }
-    } 
-  })
-  .then(mediaStream => {
-    stream = mediaStream;
-    video.srcObject = stream;
-    video.play();
-    
-    // Start scanning for QR codes
-    scanInterval = setInterval(scanForQR, 100);
-  })
-  .catch(err => {
-    console.error("Camera error:", err);
-    showPopup("Camera access denied or not available", "error");
-    setTimeout(() => {
-      hidePopup();
-      stopScanner();
-    }, 3000);
-    
-    // Fallback for testing
-    setTimeout(() => {
-      if(confirm("Camera failed. Use test key 'Jocelyn' for demo?")) {
-        checkNFCKey("Jocelyn");
-      }
-    }, 1000);
-  });
-}
-
-function scanForQR(){
-  if(!video.videoWidth || !video.videoHeight) return;
-  
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  
-  try {
-    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
-    
-    if(qrCode && qrCode.data) {
-      console.log("QR Code detected:", qrCode.data);
-      clearInterval(scanInterval);
-      stopScanner();
-      checkNFCKey(qrCode.data);
-    }
-  } catch(e) {
-    // jsQR failed, continue scanning
-  }
-}
-
-function stopScanner(){
-  scannerOverlay.style.display = "none";
-  
-  if(scanInterval) {
-    clearInterval(scanInterval);
-    scanInterval = null;
-  }
-  
-  if(stream) {
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
-  
-  video.srcObject = null;
-}
-
-function checkNFCKey(scannedData){
-  if(scannedData.includes(NFC_KEY_CODE)) {
-    // Correct key
-    doorUnlocked = true;
-    
-    // Update door appearance
-    let doorSq = squares[getIndex(DOOR_POS.r, DOOR_POS.c)];
-    doorSq.style.backgroundColor = "#4f4";
-    
-    showPopup(`Success! Secret Code: ${SECRET_CODE}`, "success");
-    
-    console.log("Door unlocked! Secret code:", SECRET_CODE);
-  } else {
-    // Wrong key
-    showPopup("Incorrect QR code. Try again!", "error");
-    setTimeout(hidePopup, 3000);
-  }
-}
-
-function showPopup(message, type = ""){
-  popupEl.textContent = message;
-  popupEl.className = type;
-  popupEl.style.display = "block";
-}
-
-function hidePopup(){
-  popupEl.style.display = "none";
-}
-
-console.log("Queen Maze Game loaded. QR Key:", NFC_KEY_CODE);
-</script>
-</body>
-</html>
+  for(const dir of directions){
+    let rr = queenPos.r + dir.dr;
+    let cc = queenPos.c + dir.dc;
+    while(rr >= 0 && rr < BOARD_SIZE && cc >= 0 && cc < BOARD_SIZE){
+      if(MAZE[rr][cc] === 1) break; // muro blocca il percorso
+     
