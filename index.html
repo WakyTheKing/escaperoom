@@ -2,351 +2,147 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Queen Maze Enhanced</title>
+<title>Regina e Labirinto</title>
 <style>
-  * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
   body, html {
-    margin: 0; padding: 0; height: 100%;
-    background: linear-gradient(135deg, #121212 0%, #1e1e2f 100%);
-    display: flex; justify-content: center; align-items: center;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none;
-    -webkit-user-select: none;
-    overflow: hidden;
-    color: #eee;
-  }
-  #game {
-    width: 95vw; max-width: 430px;
-    aspect-ratio: 1 / 1;
-    background: #222233;
-    border-radius: 25px;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    position: relative;
-    overflow: hidden;
+    margin: 0; padding: 0;
+    height: 100vh;
+    background: #12122e;
     display: flex;
-    flex-direction: column;
-    padding: 12px;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    user-select: none;
   }
   #board {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-    flex-grow: 1;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    gap: 2px;
+    background: #222244;
     border-radius: 15px;
-    overflow: hidden;
-    box-shadow:
-      inset 0 0 12px #0ff,
-      0 0 30px #0ff88;
-    background: linear-gradient(45deg, #1f2a3a 0%, #111824 100%);
-    position: relative;
-    transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
-    transform-origin: center bottom;
+    padding: 5px;
+    transition: transform 0.5s ease;
   }
   .square {
-    width: 100%;
-    height: 100%;
+    width: 50px;
+    height: 50px;
+    background-color: #6677aa;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.6rem;
+    font-size: 30px;
     cursor: default;
-    user-select: none;
-    position: relative;
-    transition:
-      background-color 0.3s ease,
-      box-shadow 0.4s ease,
-      filter 0.4s ease;
-    border-radius: 5px;
-  }
-  .square.light {
-    background: linear-gradient(135deg, #d0cfcf, #b0aebf);
-    box-shadow:
-      inset 0 3px 5px rgba(255 255 255 / 0.3),
-      0 0 5px rgba(255 255 255 / 0.1);
-  }
-  .square.dark {
-    background: linear-gradient(135deg, #5a5768, #2a2934);
-    box-shadow:
-      inset 0 3px 5px rgba(0 0 0 / 0.7),
-      0 0 6px rgba(0 255 255 / 0.2);
-  }
-  .piece {
-    pointer-events: none;
-    user-select: none;
-    filter: drop-shadow(0 0 4px #0ff);
-    transition: filter 0.3s ease;
-  }
-  /* Grayed out pieces */
-  .piece.grayed {
-    filter: grayscale(100%) brightness(0.5) drop-shadow(0 0 1px #444);
-  }
-  /* Queen */
-  .queen {
-    color: #00ffff;
-    font-weight: 900;
-    cursor: pointer;
-    user-select: none;
-    filter:
-      drop-shadow(0 0 6px #0ff)
-      drop-shadow(0 0 12px #0ff);
-    transition:
-      transform 0.3s ease,
-      filter 0.5s ease;
-  }
-  .queen:hover {
-    filter:
-      drop-shadow(0 0 15px #0ff)
-      drop-shadow(0 0 25px #0ff);
-    transform: scale(1.1);
-  }
-  /* Door */
-  .door {
-    font-size: 2.5rem;
-    color: #f4a261;
-    filter:
-      drop-shadow(0 0 6px #f4a261)
-      drop-shadow(0 0 12px #f4a261);
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.3s ease, filter 0.3s ease;
     border-radius: 6px;
-  }
-  .door:hover {
-    transform: scale(1.1);
-    filter:
-      drop-shadow(0 0 15px #f4a261)
-      drop-shadow(0 0 25px #f4a261);
-  }
-  /* Walls */
-  .wall {
-    background-color: #111117;
-    box-shadow: inset 0 0 6px #000a;
-  }
-  /* Highlight preview moves */
-  .highlight {
-    box-shadow:
-      0 0 14px 4px #0ff7,
-      inset 0 0 12px 3px #0ff7;
-    cursor: pointer;
-    transition: box-shadow 0.4s ease;
-  }
-  /* Highlight selected square */
-  .selected {
-    box-shadow:
-      0 0 20px 6px #0ff,
-      inset 0 0 20px 6px #0ff;
-  }
-  /* Queen moving */
-  .queen.moving {
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  /* Scanner overlay */
-  #scannerOverlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 9999;
-    color: white;
-    font-size: 1.1rem;
-    padding: 20px;
-  }
-  #scannerOverlay video {
-    width: 90vw;
-    max-width: 400px;
-    border-radius: 15px;
-    box-shadow: 0 0 25px #0ff;
-  }
-  #scannerOverlay button {
-    margin-top: 20px;
-    background: #0ff;
-    border: none;
-    border-radius: 15px;
-    color: #000;
-    font-weight: 700;
-    font-size: 1.3rem;
-    padding: 12px 30px;
-    cursor: pointer;
-    box-shadow: 0 0 15px #0ff;
-    transition: background-color 0.3s ease;
-  }
-  #scannerOverlay button:hover {
-    background-color: #06c;
-    color: #fff;
-  }
-  /* Popup message */
-  #popup {
-    position: fixed;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #222233cc;
-    border-radius: 25px;
-    padding: 20px 30px;
-    color: #0ff;
-    font-size: 1.4rem;
-    box-shadow: 0 0 25px #0ff;
-    z-index: 10000;
-    display: none;
-    max-width: 90vw;
-    text-align: center;
     user-select: none;
   }
-  #popup.error {
-    color: #f44;
-    box-shadow: 0 0 25px #f44;
+  .dark {
+    background-color: #445577;
   }
-  #popup.success {
-    color: #4f4;
-    box-shadow: 0 0 25px #4f4;
+  .highlight {
+    background-color: #22ffaa !important;
+    cursor: pointer;
+  }
+  .queen {
+    color: cyan;
+    cursor: pointer;
+  }
+  .door {
+    color: orange;
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
 
-<div id="game" aria-label="Gioco regina nel labirinto">
-  <div id="board" role="grid" aria-live="polite" aria-atomic="true" aria-label="Scacchiera">
-    <!-- caselle generate da JS -->
-  </div>
-</div>
-
-<!-- Scanner Overlay -->
-<div id="scannerOverlay" role="dialog" aria-modal="true" aria-labelledby="scannerTitle">
-  <div id="scannerTitle" style="margin-bottom: 10px; font-weight: 700; font-size:1.3rem;">Scansiona il QR Code (Chiave NFC virtuale)</div>
-  <video id="video" autoplay playsinline></video>
-  <button id="closeScannerBtn" aria-label="Chiudi scanner">Annulla</button>
-</div>
-
-<!-- Popup messaggi -->
-<div id="popup" role="alert" aria-live="assertive"></div>
+<div id="board"></div>
 
 <script>
-const NFC_KEY_CODE = "Jocelyn";
+const board = document.getElementById("board");
 
-const BOARD_SIZE = 8;
+const size = 8;
+const queenSymbol = "♕";
+const doorSymbol = "🚪";
 
-const PIECES = {
-  whiteQueen: "♕",
-  door: "🚪"
-};
-
-const MAZE = [
-  [1,1,1,1,1,1,1,1],
-  [1,0,0,0,1,0,0,1],
-  [1,0,1,0,1,0,1,1],
-  [1,0,1,0,0,0,0,1],
-  [1,0,1,1,1,1,0,1],
-  [1,0,0,0,0,1,0,1],
-  [1,1,1,1,0,0,0,1],
-  [1,1,1,1,1,1,2,1]
-];
-
-const DOOR_POS = {r:7, c:6};
-let queenPos = {r:7, c:3};
+let queenPos = {r: 7, c: 3};
+let doorPos = {r: 7, c: 6};
 let expanded = false;
-let moving = false;
-let doorUnlocked = false;
 
-let boardEl, squares = [];
-let scannerOverlay, video, popupEl;
-
-window.onload = () => {
-  boardEl = document.getElementById("board");
-  scannerOverlay = document.getElementById("scannerOverlay");
-  video = document.getElementById("video");
-  popupEl = document.getElementById("popup");
-
-  generateBoard();
-  updateBoardInitial();
-
-  // Evento click regina iniziale
-  squares[getIndex(queenPos.r, queenPos.c)].addEventListener("click", onQueenClick);
-
-  document.getElementById("closeScannerBtn").addEventListener("click", stopScanner);
-};
-
-function generateBoard(){
-  for(let r=0; r<BOARD_SIZE; r++){
-    for(let c=0; c<BOARD_SIZE; c++){
+function createBoard() {
+  board.innerHTML = "";
+  for(let r=0; r<size; r++){
+    for(let c=0; c<size; c++){
       const sq = document.createElement("div");
       sq.classList.add("square");
-      sq.setAttribute("role","gridcell");
-      sq.setAttribute("data-r", r);
-      sq.setAttribute("data-c", c);
-      if((r+c)%2 === 0) sq.classList.add("light");
-      else sq.classList.add("dark");
-      boardEl.appendChild(sq);
-      squares.push(sq);
-    }
-  }
-}
+      if((r+c) % 2 === 1) sq.classList.add("dark");
+      sq.dataset.r = r;
+      sq.dataset.c = c;
 
-function getIndex(r,c){
-  return r*BOARD_SIZE + c;
-}
-
-function updateBoardInitial(){
-  for(let r=0; r<BOARD_SIZE; r++){
-    for(let c=0; c<BOARD_SIZE; c++){
-      let sq = squares[getIndex(r,c)];
-      sq.innerHTML = "";
-      sq.classList.remove("wall", "highlight", "selected", "door");
-      sq.style.cursor = "default";
-      sq.onclick = null;
-      // regina iniziale
       if(r === queenPos.r && c === queenPos.c){
-        sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
-        sq.style.cursor = "pointer";
-        sq.onclick = onQueenClick;
-      } else {
-        sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
+        sq.textContent = queenSymbol;
+        sq.classList.add("queen");
+        sq.addEventListener("click", onQueenClick);
+      } else if(r === doorPos.r && c === doorPos.c){
+        sq.textContent = doorSymbol;
+        sq.classList.add("door");
+        sq.addEventListener("click", onDoorClick);
       }
+
+      board.appendChild(sq);
     }
   }
 }
 
 function onQueenClick(){
-  if(moving || doorUnlocked) return;
-  if(!expanded){
-    expanded = true;
-    boardEl.style.transform = "scale(1.35)";
-    setTimeout(() => {
-      showMaze();
-      showMovesPreview();
-    }, 700);
-  } else {
-    showMovesPreview();
-  }
+  if(expanded) return; // evita ripetizioni
+  expanded = true;
+  board.style.transform = "scale(1.5)";
+  showQueenMoves();
 }
 
-function showMaze(){
-  for(let r=0; r<BOARD_SIZE; r++){
-    for(let c=0; c<BOARD_SIZE; c++){
-      const sq = squares[getIndex(r,c)];
-      sq.classList.remove("wall", "highlight", "selected", "door");
-      sq.innerHTML = "";
-      sq.style.cursor = "default";
-      sq.onclick = null;
+function showQueenMoves(){
+  // evidenzia mosse valide orizzontali, verticali e diagonali
+  const directions = [
+    {dr:1, dc:0},{dr:-1, dc:0},{dr:0, dc:1},{dr:0, dc:-1},
+    {dr:1, dc:1},{dr:-1, dc:-1},{dr:1, dc:-1},{dr:-1, dc:1}
+  ];
+  directions.forEach(dir => {
+    let rr = queenPos.r + dir.dr;
+    let cc = queenPos.c + dir.dc;
+    while(rr >= 0 && rr < size && cc >= 0 && cc < size){
+      const sq = board.querySelector(`.square[data-r="${rr}"][data-c="${cc}"]`);
+      if(sq.classList.contains("door")){
+        sq.classList.add("highlight");
+        sq.addEventListener("click", () => moveQueen(rr, cc));
+        break;
+      }
+      sq.classList.add("highlight");
+      sq.addEventListener("click", () => moveQueen(rr, cc));
+      rr += dir.dr;
+      cc += dir.dc;
+    }
+  });
+}
 
-      if(MAZE[r][c] === 1){
-        sq.classList.add("wall");
-      } else if(MAZE[r][c] === 2){
-        sq.classList.add("door");
-        sq.innerHTML = PIECES.door;
-        sq.style.cursor = "pointer";
-        sq.onclick = onDoorClick;
-      } else {
-        if(r === queenPos.r && c === queenPos.c){
-          sq.innerHTML = `<span class="piece queen">${PIECES.whiteQueen}</span>`;
-          sq.style.cursor = "pointer";
-          sq.onclick = onQueenClick;
-        } else {
-          sq.innerHTML = `<span class="piece grayed" style="font-size:1.2rem;">●</span>`;
-          sq.onclick = () => onMoveAttempt(r, c
+function moveQueen(r,c){
+  queenPos = {r,c};
+  clearHighlights();
+  createBoard();
+}
+
+function clearHighlights(){
+  board.querySelectorAll(".highlight").forEach(el => {
+    el.classList.remove("highlight");
+    el.replaceWith(el.cloneNode(true)); // reset event listeners
+  });
+}
+
+function onDoorClick(){
+  alert("Porta cliccata! Qui apriremo lo scanner QR.");
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
